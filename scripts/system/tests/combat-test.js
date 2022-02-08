@@ -114,7 +114,7 @@ export default class CombatTest extends Test {
             effect.isPlain = true;
             effect.text = game.i18n.localize("TRAIT.PENETRATING_EFFECT");
             damage.traitEffects.push(effect);
-            damage.armour -= 1;        
+            damage.armour -= 1;
         }
     
      
@@ -139,7 +139,7 @@ export default class CombatTest extends Test {
             damage.traitEffects.push(effect);
         }
 
-        if(damage.armour > 0 && weapon.traitList.piercing) {
+        if(weapon.traitList.piercing) {
             effect = this._createTraitEffect();
             effect.isPiercing = true;
             effect.text = game.i18n.format("TRAIT.PIERCING_EFFECT", {triggers : result.triggers});

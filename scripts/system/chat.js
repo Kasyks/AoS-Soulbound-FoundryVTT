@@ -168,12 +168,21 @@ export default class SoulboundChat {
             }
         );
 
+         options.push(
+            {
+                name: "CHAT.APPLY_DAMAGE_WITH_PIERCING",
+                icon: '<i class="fas fa-user-minus"></i>',
+                condition: canApplyDamage,
+                callback: li => SoulboundChat.applyChatCardDamagePiercing(li, 1)
+            }
+        );
+         
         options.push(
             {
                 name: "CHAT.APPLY_HALF_DAMAGE",
                 icon: '<i class="fas fa-user-minus"></i>',
                 condition: canApplyDamage,
-                callback: li => SoulboundChat.applyChatCardHalfDamage(li, 1)
+                callback: li => SoulboundChat.applyChatCardDamage(li, 0.5)
             }
         );
         
@@ -293,13 +302,13 @@ export default class SoulboundChat {
             item = test.item
         }
 
-        damage *= multiplier;
+        damage = Math.ceil(damage * multiplier);
 
         options.penetrating = test.item?.traitList?.penetrating ? 1 : 0
         options.ineffective = test.item?.traitList?.ineffective
         options.restraining = test.item?.traitList?.restraining
         options.crushing = test.item?.traitList?.crushing
-        options.piercing = test.item?.traitList?.piercing
+        options.piercing = test.item?.traitList?.piercing 
         options.slashing = test.item?.traitList?.slashing
         
         // apply to any selected actors
@@ -309,7 +318,11 @@ export default class SoulboundChat {
         }));
     }
 
-static async applyChatCardHalfDamage(li, multiplier, options={}) {
+     /**
+     * @param {HTMLElement} messsage    The chat entry which contains the roll data
+     * @return {Promise}
+     */
+    static async applyChatCardDamagePiercing(li, multiplier, options={}) {
 
         const message = game.messages.get(li.data("messageId"));
         let test = message.getTest();
@@ -326,7 +339,7 @@ static async applyChatCardHalfDamage(li, multiplier, options={}) {
                         primary : {
                             label : game.i18n.localize("DIALOG.PRIMARY"),
                             callback : () => {
-                                damage = Math.ceil(test.result.primary.damage.total/2)
+                                damage = test.result.primary.damage.total
                                 item = test.item
                                 resolve()
                             }
@@ -334,7 +347,7 @@ static async applyChatCardHalfDamage(li, multiplier, options={}) {
                         secondary : {
                             label : game.i18n.localize("DIALOG.SECONDARY"),
                             callback : () => {
-                                damage = Math.ceil(test.result.secondary.damage.total/2)
+                                damage = test.result.secondary.damage.total
                                 item = test.secondaryWeapon
                                 resolve()
                             }
@@ -346,34 +359,39 @@ static async applyChatCardHalfDamage(li, multiplier, options={}) {
         }
         else if (test.result.primary?.damage) // If only primary
         {
-            damage = Math.ceil(test.result.primary.damage.total/2)
+            damage = test.result.primary.damage.total
             item = test.item
         }
         else if (test.result.secondary?.damage) // If only secondary
         {
-            damage = Math.ceil(test.result.secondary.damage.total/2)
+            damage = test.result.secondary.damage.total
             item = test.secondaryWeapon
         }
         else  // If normal test
         {
-            damage = Math.ceil(test.result.damage.total/2)
+            damage = test.result.damage.total
             item = test.item
         }
 
-        damage *= multiplier;
-
+        damage = Math.ceil(damage * multiplier);
+        let piercingvalue = test.result.triggers
+        
         options.penetrating = test.item?.traitList?.penetrating ? 1 : 0
+        options.penetrating = test.item?.traitList?.piercing ? (options.penetrating + piercingvalue) : options.penetrating
         options.ineffective = test.item?.traitList?.ineffective
         options.restraining = test.item?.traitList?.restraining
+       
         options.crushing = test.item?.traitList?.crushing
-        options.piercing = test.item?.traitList?.piercing
         options.slashing = test.item?.traitList?.slashing
+        
+        options.penetrating = (options.penetrating > canvas.tokens.controlled.armour) ? canvas.tokens.controlled.armour : options.penetrating;    
         // apply to any selected actors
         return Promise.all(canvas.tokens.controlled.map(t => {
             const a = t.actor;
             return a.applyDamage(damage, options);
         }));
     }
+    
         /**
      * @param {HTMLElement} messsage    The chat entry which contains the roll data
      * @return {Promise}
