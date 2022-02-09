@@ -384,7 +384,7 @@ export default class SoulboundChat {
         options.crushing = test.item?.traitList?.crushing
         options.slashing = test.item?.traitList?.slashing
         
-        options.penetrating = (options.penetrating > canvas.tokens.controlled.armour) ? canvas.tokens.controlled.armour : options.penetrating;    
+          
         // apply to any selected actors
         return Promise.all(canvas.tokens.controlled.map(t => {
             const a = t.actor;
