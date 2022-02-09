@@ -185,7 +185,15 @@ export default class SoulboundChat {
                 callback: li => SoulboundChat.applyChatCardDamage(li, 0.5)
             }
         );
-        
+         
+        options.push(
+            {
+                name: "CHAT.APPLY_HALF_DAMAGE_WITH_PIERCING",
+                icon: '<i class="fas fa-user-minus"></i>',
+                condition: canApplyDamage,
+                callback: li => SoulboundChat.applyChatCardDamagePiercing(li, 0.5)
+            }
+        );        
         options.push(
             {
                 name: "CHAT.APPLY_DAMAGE_IGNORE_ARMOUR",
