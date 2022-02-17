@@ -1,5 +1,6 @@
 import Test from "./test.js";
 
+
 export default class CombatTest extends Test {
 
     constructor(data)

@@ -182,7 +182,7 @@ AOS.traits = {
     spread : "Spread",
     subtle : "Subtle",
     thrown : "Thrown",
-    twohanded : "Two-handed"
+    twohanded : "Two-handed",
 }
 
 AOS.dicePath = "systems/age-of-sigmar-soulbound/asset/image"
