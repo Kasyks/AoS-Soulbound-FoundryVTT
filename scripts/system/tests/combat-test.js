@@ -1,6 +1,5 @@
 import Test from "./test.js";
 
-
 export default class CombatTest extends Test {
 
     constructor(data)
@@ -115,10 +114,9 @@ export default class CombatTest extends Test {
             effect.isPlain = true;
             effect.text = game.i18n.localize("TRAIT.PENETRATING_EFFECT");
             damage.traitEffects.push(effect);
-            damage.armour -= 1;
+            damage.armour -= 1;        
         }
     
-     
         if(weapon.traitList.cleave) {
             effect = this._createTraitEffect();
             effect.isCleave = true;

@@ -170,22 +170,21 @@ export default class SoulboundChat {
 
         options.push(
             {
-                name: "CHAT.APPLY_HALF_DAMAGE",
-                icon: '<i class="fas fa-user-minus"></i>',
-                condition: canApplyDamage,
-                callback: li => SoulboundChat.applyChatCardDamage(li, 0.5)
-            }
-        );
-         
-        options.push(
-            {
                 name: "CHAT.APPLY_DAMAGE_IGNORE_ARMOUR",
                 icon: '<i class="fas fa-user-minus"></i>',
                 condition: canApplyDamage,
                 callback: li => SoulboundChat.applyChatCardDamage(li, 1,  {ignoreArmour : true})
             }
         );
-    
+
+        options.push(
+            {
+                name: "CHAT.APPLY_HALF_DAMAGE",
+                icon: '<i class="fas fa-user-minus"></i>',
+                condition: canApplyDamage,
+                callback: li => SoulboundChat.applyChatCardDamage(li, 0.5)
+            }
+        );    
 
         options.push(
             {
@@ -400,7 +399,7 @@ export default class SoulboundChat {
             return a.applyDamage(damage, options);
         }));
     }
-    
+
         /**
      * @param {HTMLElement} messsage    The chat entry which contains the roll data
      * @return {Promise}
