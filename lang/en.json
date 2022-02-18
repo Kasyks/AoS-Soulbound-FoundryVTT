@@ -291,6 +291,17 @@
   "PARTY.SOULFIRE": "Soulfire",
   "PARTY.DOOM": "Doom",
 
+ "ARCHETYPE.SPECIES" : "Species",
+ "ARCHETYPE.BODY" : "Body",
+ "ARCHETYPE.MIND" : "Mind",
+ "ARCHETYPE.SOUL" : "Soul",
+ "ARCHETYPE.CORE_SKILL" : "Core",
+ "ARCHETYPE.SKILLS" : "Skills",
+ "ARCHETYPE.TALENTS" : "Talents",
+ "ARCHETYPE.CORE_TALENTS" : "Core",
+ "ARCHETYPE.CHOOSE" : "Choose",
+ "ARCHETYPE.EQUIPMENT" : "Equipment",
+
   "POWER.NAME": "Name",
   "POWER.DN": "DN",
   "POWER.DN_COST": "DN / Cost",
@@ -463,7 +474,6 @@
   "TRAIT.PIERCING_EFFECT" : "Piercing(manual): Ignore {triggers} Points of Armour",
   "TRAIT.SLASHING" : "slashing",
   "TRAIT.SLASHING_EFFECT" : "Slashing(manual): On '6' target is knocked Prone. Every time when Move during this combat,suffer 1 Damage(ignore Armour)",
-
   "TYPE.LIGHT": "Light",
   "TYPE.MEDIUM": "Medium",
   "TYPE.HEAVY": "Heavy",
