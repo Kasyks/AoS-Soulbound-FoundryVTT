@@ -8,7 +8,7 @@
         </div>
         <div class="sheet-subHeader">
             <h3>{{localize "ARCHETYPE.SPECIES"}}</h3>
-            <input name="data.cost" type="text" value="{{data.cost}}" />
+            <input name="data.species" type="text" value="{{data.species}}" />
         </div>
         <hr>
         <div class="sheet-content">
@@ -34,34 +34,43 @@
                     </div>
                 </div>
                 <div class="content-row skills">
-                    <div class="skill-header">
-                        <div class="core">
-                            <label>
-                                {{localize "ARCHETYPE.CORE_SKILL"}}: 
-                            </label>
-                            <select name="data.skills.core">
-                                <option>Arcana</option>
-                            </select>
+                    <div class="entry-vertical">
+                        <div class="skill-header">
+                            <div class="core">
+                                <label>
+                                    {{localize "ARCHETYPE.CORE_SKILL"}}: 
+                                </label>
+                                <select name="data.skills.core">
+                                    <option value=""></option>
+                                    {{#select data.skills.core}}
+                                    {{#each (config "skills") as |skill sk|}}
+                                    {{#if (lookup ../skills sk)}}
+                                    <option value="{{sk}}">{{skill}}</option>
+                                    {{/if}}
+                                    {{/each}}
+                                    {{/select}}
+                                </select>
+                            </div>
+    
+                            <h3>{{localize "ARCHETYPE.SKILLS"}}</h3>
+                            <div class="xp">
+                                <input type="number" value="{{data.skills.xp}}" name="data.skills.xp"
+                                    data-dtype="Number" />
+                                <label>
+                                    XP
+                                </label>
+                            </div>
                         </div>
-
-                        <h3>{{localize "ARCHETYPE.SKILLS"}}</h3>
-                        <div class="cost">
-                            <input type="number" value="{{data.skills.cost}}" name="data.skills.cost"
-                                data-dtype="Number" />
-                            <label>
-                                XP
-                            </label>
+                        <div class="skill-selection">
+                            {{#each (config "skills") as |skill sk|}}
+                            <div class="skill-group">
+                                <input type="checkbox" class="skill-checkbox" data-skill="{{sk}}" {{checked (lookup ../skills sk)}}/>
+                                <label class="skill-label">
+                                    {{skill}}
+                                </label>
+                            </div>
+                            {{/each}}
                         </div>
-                    </div>
-                    <div class="skill-selection">
-                        {{#each (config "skills") as |skill sk|}}
-                        <div class="skill-group">
-                            <input type="checkbox" data-skill="{{sk}}" checked="???" />
-                            <label class="skill-label">
-                                {{skill}}
-                            </label>
-                        </div>
-                        {{/each}}
                     </div>
                 </div>
                 <div class="content-row talent">
@@ -69,28 +78,32 @@
                         <h3>{{localize "ARCHETYPE.TALENTS"}}</h3>
                         <div class="entry-list">
                             <h4>{{localize "ARCHETYPE.CORE_TALENTS"}}</h4>
-                            {{#each data.talents.core as |talent index|}}
-                            <div class="entry-content">
-                                <div class="entry-element talents" data-index="{{index}}">
-                                    {{talent.name}}
-                                    <a class="talent-edit"><i class="fas fa-edit"></i></a>
-                                    <a class="talent-delete"><i class="fas fa-times"></i></a>
+                            <div class="inline-list">
+                                {{#each data.talents.core as |talent index|}}
+                                <div class="entry-content">
+                                    <div class="entry-element talents" data-path="data.talents.core" data-index="{{index}}">
+                                        <div class="entry-name">
+                                            {{talent.name}}
+                                        </div>
+                                    </div>
                                 </div>
+                                {{/each}}
                             </div>
-                            {{/each}}
                         </div>
                         <hr>
                         <div class="entry-list">
-                            <h4>{{localize "ARCHETYPE.CHOOSE"}} <input type="number" name="data.talents.choose" value="{{data.talents.choose}}"></h4>
-                            {{#each data.talents.list as |talent index|}}
-                            <div class="entry-content">
-                                <div class="entry-element talents" data-index="{{index}}">
-                                {{talent.name}}
-                                    <a class="talent-edit"><i class="fas fa-edit"></i></a>
-                                    <a class="talent-delete"><i class="fas fa-times"></i></a>
+                            <h4>{{localize "ARCHETYPE.CHOOSE"}} <input type="number" name="data.talents.choose" value="{{data.talents.choose}}" data-dtype="Number"></h4>
+                            <div class="inline-list">
+                                {{#each data.talents.list as |talent index|}}
+                                <div class="entry-content">
+                                    <div class="entry-element talents" data-path="data.talents.list" data-index="{{index}}">
+                                        <div class="entry-name">
+                                            {{talent.name}}
+                                        </div>
+                                    </div>
                                 </div>
+                                {{/each}}
                             </div>
-                            {{/each}}
                         </div>
                     </div>
                 </div>
@@ -98,15 +111,17 @@
                     <div class="entry-vertical">
                         <h3>{{localize "ARCHETYPE.EQUIPMENT"}}</h3>
                         <div class="entry-list">
-                            {{#each data.equipment as |equipment index|}}
-                            <div class="entry-content">
-                                <div class="entry-element talents" data-index="{{index}}">
-                                    {{equipment.name}}
-                                    <a class="equipment-edit"><i class="fas fa-edit"></i></a>
-                                    <a class="equipment-delete"><i class="fas fa-times"></i></a>
+                            <div class="inline-list">
+                                {{#each data.equipment as |equipment index|}}
+                                <div class="entry-content">
+                                    <div class="entry-element equipment" data-path="data.equipment" data-index="{{index}}">
+                                        <div class="entry-name">
+                                            {{equipment.name}}
+                                        </div>
+                                    </div>
                                 </div>
+                                {{/each}}
                             </div>
-                            {{/each}}
                         </div>
                     </div>
                 </div>
