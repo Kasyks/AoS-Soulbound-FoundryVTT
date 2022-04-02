@@ -124,29 +124,12 @@ export default class CombatTest extends Test {
             effect.text = game.i18n.format("TRAIT.REND_EFFECT", {triggers : result.triggers});
             damage.traitEffects.push(effect);
         }
-
-        if(weapon.traitList.crushing) {
-            effect = this._createTraitEffect();
-            effect.isPlain = true;
-            effect.text = game.i18n.localize("TRAIT.CRUSHING_EFFECT");
-            damage.traitEffects.push(effect);
-        }
-
         if(weapon.traitList.piercing) {
             effect = this._createTraitEffect();
             effect.isPiercing = true;
             effect.text = game.i18n.format("TRAIT.PIERCING_EFFECT", {triggers : result.triggers});
             damage.traitEffects.push(effect);
         }
-        
-        if(weapon.traitList.slashing) {
-            effect = this._createTraitEffect();
-            effect.isPlain = true;
-            effect.text = game.i18n.localize("TRAIT.SLASHING_EFFECT");
-            damage.traitEffects.push(effect);
-        }
-
-
     
         if (addSuccess) {
             damage.total = damageValue + result.successes;
@@ -172,7 +155,6 @@ export default class CombatTest extends Test {
             isRend: false,
             isCleave: false,
             isPlain: false,
-            isPiercing: false,
             text:  ""
         };
     }

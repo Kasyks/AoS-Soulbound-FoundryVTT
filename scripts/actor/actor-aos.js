@@ -4,6 +4,7 @@ import CombatTest from "../system/tests/combat-test.js";
 import SpellTest from "../system/tests/spell-test.js";
 import MiracleTest from "../system/tests/miracle-test.js";
 import SoulboundUtility from "../system/utility.js";
+import CharacterCreation from "../apps/character-creation.js";
 
 export class AgeOfSigmarActor extends Actor {
 
@@ -34,6 +35,12 @@ export class AgeOfSigmarActor extends Actor {
     async _preUpdate(updateData, options, user) {
         await super._preUpdate(updateData, options, user)
 
+            // Treat the custom default token as a true default token
+        // If you change the actor image from the default token, it will automatically set the same image to be the token image
+        if (this.data.token.img.includes("modules/soulbound-core/assets/tokens/unknown") && updateData.img && !updateData.token?.img) {
+            updateData["token.img"] = updateData.img;
+        }
+
         this.handleScrollingText(updateData)
     }
 
@@ -47,7 +54,7 @@ export class AgeOfSigmarActor extends Actor {
                 this._displayScrollingChange(getProperty(data, "data.combat.mettle.value") - this.combat.mettle.value, { mettle: true });
         }
         catch (e) {
-            console.error("Error displaying scrolling text for", data, e)
+            console.error(game.i18n.localize("ERROR.ScrollingText"), data, e)
         }
     }
 
@@ -278,12 +285,76 @@ export class AgeOfSigmarActor extends Actor {
         })
     }
 
+    characterCreation(archetype)
+    {
+        new Dialog({
+            title : game.i18n.localize("HEADER.CHARGEN"),
+            content : `<p>${game.i18n.localize("CHARGEN.PROMPT")}</p>`,
+            buttons : {
+                yes : {
+                    label: game.i18n.localize("BUTTON.YES"),
+                    callback: () => {
+                        new CharacterCreation({actor: this, archetype}).render(true)
+                    }
+                },
+                no : {
+                    label : game.i18n.localize("BUTTON.NO"),
+                    callback: () => {
+                        this.update({"data.bio.archetype" : archetype.name, })
+                        this.createEmbeddedDocuments("Item", [archetype.toObject()])
+                    }
+                }
+            }
+        }).render(true)
+    }
+
+    async applyArchetype(archetype) {
+
+        ui.notifications.notify(`${game.i18n.localize("CHARGEN.APPLYING")} ${archetype.name} ${game.i18n.localize("BIO.ARCHETYPE")}`)
+
+        let items = [];
+        let actorData = this.toObject();
+
+        actorData.data.bio.faction = archetype.species
+
+        actorData.data.attributes.body.value = archetype.attributes.body
+        actorData.data.attributes.mind.value = archetype.attributes.mind
+        actorData.data.attributes.soul.value = archetype.attributes.soul
+
+        archetype.skills.list.forEach(skill => {
+            actorData.data.skills[skill].training = 1
+            actorData.data.skills[skill].focus = 1
+        })
+
+        actorData.data.skills[archetype.skills.core].training = 2
+        actorData.data.skills[archetype.skills.core].focus = 2
+
+        items = items.concat(archetype.ArchetypeItems);
+
+        // Remove IDs so items work within the update method
+        items.forEach(i => delete i._id)
+
+        actorData.data.bio.type = 3; // Champion
+
+        // Fill toughness and mettle so it doesn't start as 0 (not really ideal though, doesnt't take into account effects)
+        actorData.data.combat.health.toughness.value = archetype.attributes.body + archetype.attributes.mind + archetype.attributes.soul
+        actorData.data.combat.mettle.value = Math.ceil(archetype.attributes.soul / 2)
+
+        actorData.img = archetype.data.img
+        actorData.token.img = archetype.data.img.replace("images", "tokens")
+
+        await this.update(actorData)
+
+        // Add items separately so active effects get added seamlessly
+        this.createEmbeddedDocuments("Item", items)
+    }
+
     //#region Rolling Setup
     async setupAttributeTest(attribute, options={}) 
     {
         console.log(options)
         let dialogData = RollDialog._dialogData(this, attribute, null, options)
-        dialogData.title = `${game.i18n.localize(game.aos.config.attributes[attribute])} Test`
+        dialogData.title = `${game.i18n.localize(game.aos.config.attributes[attribute])} ${game.i18n.localize("SKILL.TEST")}`
         let testData = await RollDialog.create(dialogData);
         testData.targets = dialogData.targets
         testData.speaker = this.speakerData()
@@ -293,7 +364,7 @@ export class AgeOfSigmarActor extends Actor {
     async setupSkillTest(skill, attribute, options={}) 
     {
         let dialogData = RollDialog._dialogData(this, attribute || game.aos.config.skillAttributes[skill], skill, options)
-        dialogData.title = `${game.i18n.localize(game.aos.config.skills[skill])} Test`
+        dialogData.title = `${game.i18n.localize(game.aos.config.skills[skill])} ${game.i18n.localize("SKILL.TEST")}`
         let testData = await RollDialog.create(dialogData);
         testData.targets = dialogData.targets
         testData.speaker = this.speakerData()
@@ -306,7 +377,7 @@ export class AgeOfSigmarActor extends Actor {
             weapon = this.items.get(weapon)
 
         let dialogData = CombatDialog._dialogData(this, weapon, options)
-        dialogData.title = `${weapon.name} Test`
+        dialogData.title = `${weapon.name} ${game.i18n.localize("WEAPON.TEST")}`
         let testData = await CombatDialog.create(dialogData);
         testData.targets = dialogData.targets
         testData.speaker = this.speakerData()
@@ -319,7 +390,7 @@ export class AgeOfSigmarActor extends Actor {
             power = this.items.get(power)
 
         let dialogData = SpellDialog._dialogData(this, power)
-        dialogData.title = `${power.name} Test`
+        dialogData.title = `${power.name} ${game.i18n.localize("SPELL.TEST")}`
         let testData = await SpellDialog.create(dialogData);
         testData.targets = dialogData.targets
         testData.speaker = this.speakerData()
@@ -332,10 +403,10 @@ export class AgeOfSigmarActor extends Actor {
             power = this.items.get(power)
 
         if (power.cost > this.combat.mettle.value)
-            return ui.notifications.error("Not enough Mettle!")
+            return ui.notifications.error(game.i18n.localize("ERROR.NotEnoughMettle"))
 
         let dialogData = RollDialog._dialogData(this, "soul", "devotion")
-        dialogData.title = `${power.name} Test`
+        dialogData.title = `${power.name} ${game.i18n.localize("POWER.TEST")}`
         dialogData.difficulty = game.aos.utility.DNToObject(power.test.dn).difficulty || dialogData.difficulty
         dialogData.complexity = game.aos.utility.DNToObject(power.test.dn).complexity || dialogData.complexity
         let testData = await RollDialog.create(dialogData);

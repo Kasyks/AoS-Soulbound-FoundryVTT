@@ -315,9 +315,7 @@ export default class SoulboundChat {
         options.penetrating = test.item?.traitList?.penetrating ? 1 : 0
         options.ineffective = test.item?.traitList?.ineffective
         options.restraining = test.item?.traitList?.restraining
-        options.crushing = test.item?.traitList?.crushing
         options.piercing = test.item?.traitList?.piercing 
-        options.slashing = test.item?.traitList?.slashing
         
         // apply to any selected actors
         return Promise.all(canvas.tokens.controlled.map(t => {
@@ -388,9 +386,6 @@ export default class SoulboundChat {
         options.penetrating = test.item?.traitList?.piercing ? (options.penetrating + piercingvalue) : options.penetrating
         options.ineffective = test.item?.traitList?.ineffective
         options.restraining = test.item?.traitList?.restraining
-       
-        options.crushing = test.item?.traitList?.crushing
-        options.slashing = test.item?.traitList?.slashing
         
           
         // apply to any selected actors

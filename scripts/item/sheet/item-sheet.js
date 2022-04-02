@@ -1,5 +1,7 @@
 import ItemTraits from "../../apps/item-traits.js";
 import { AgeOfSigmarItem } from "../item-aos.js";
+import ArchetypeGroups from "../../apps/archetype-groups.js"
+import ArchetypeGeneric from "../../apps/archetype-generic.js";
 
 export class AgeOfSigmarItemSheet extends ItemSheet {
 
@@ -16,7 +18,7 @@ export class AgeOfSigmarItemSheet extends ItemSheet {
           initial: "description",
         },
       ],
-      dragDrop: [{ dragSelector: ".item-list .item", dropSelector: null }],
+      dragDrop: [{ dragSelector: ".item-list .item", dropSelector: null }, {dragSelector: ".journal-list .journalentry", dropSelector: null}],
       scrollY: [".sheet-content"]
     });
   }
@@ -24,33 +26,9 @@ export class AgeOfSigmarItemSheet extends ItemSheet {
   get template() {
     return `systems/age-of-sigmar-soulbound/template/sheet/${this.item.type}.html`
   }
+
+  
   async _updateObject(event, formData) {
-
-
-    // If this item is from an archetype entry, update the diff instead of the actual item
-    // I would like to have done this is the item's _preCreate but the item seems to lose 
-    // its "archetype" reference so it has to be done here
-    // TODO: Current Issue - changing a property, then changing back to the original value
-    // does not work due to `diffObject()`
-
-    if (this.item.archetype) {
-      // Get the archetype's equipment, find the corresponding object, add to its diff
-      let list = duplicate(this.item.archetype.equipment)
-      let equipmentObj = list[this.item.equipmentIndex];
-      mergeObject( // Merge current diff with new diff
-        equipmentObj.diff, 
-        diffObject(this.item.toObject(), expandObject(formData)), 
-        {overwrite : true})
-
-      // If the diff includes the item's name, change the name stored in the archetype
-      if (equipmentObj.diff.name)
-        equipmentObj.name = equipmentObj.diff.name
-      else 
-        equipmentObj.name = this.item.name
-
-      this.item.archetype.update({ "data.equipment": list })
-      return
-    }
 
     // Special processing for archetype items to parse a list of skills available to spend exp on from the checkboxes
     if (this.item.type == "archetype") {
@@ -65,14 +43,20 @@ export class AgeOfSigmarItemSheet extends ItemSheet {
     }
     return super._updateObject(event, formData)
   }
-
   _onDrop(ev) {
+    console.log(ev)
     let dragData = JSON.parse(ev.dataTransfer.getData("text/plain"));
     let dropItem = game.items.get(dragData.id)
 
     if (this.item.type === "archetype") {
       let list;
       let path;
+      
+      if (dragData.type == "JournalEntry")
+      {
+        return this.item.update({"data.journal" : dragData.id})
+      }
+
       let obj = {
         id: dragData.id,
         name: dropItem.name,
@@ -109,10 +93,15 @@ export class AgeOfSigmarItemSheet extends ItemSheet {
         let obj = {
           id: dragData.id,
           name: dropItem.name,
+          type : "item",
           diff: {}
         }
+
         list.push(obj)
-        this.item.update({ "data.equipment": list })
+
+        // Add new index to groups (last index + 1)
+        let groups = this.item.addToGroup({type : "item", index : (list.length - 1 || 0)})
+        this.item.update({ "data.equipment": list, "data.groups": groups })
       }
     }
   }
@@ -132,18 +121,34 @@ export class AgeOfSigmarItemSheet extends ItemSheet {
         onclick: (ev) => this.item.sendToChat(),
       }
     ].concat(buttons);
+
+    if (this.item.journal)
+    {
+      buttons.unshift({
+        label : game.i18n.localize("BUTTON.JOURNAL"),
+        class: "archetype-journal",
+        icon : "fas fa-book",
+        onclick: (ev) => this.item.Journal?.sheet?.render(true)
+      })
+    }
+
     return buttons;
   }
 
   getData() {
     const data = super.getData();
 
+    // If this is a temp item with an archetype parent
     if (this.item.archetype) {
-      let list = duplicate(this.item.archetype.equipment)
-      let equipmentObj = list[this.item.equipmentIndex];
-      mergeObject(data.data, equipmentObj.diff, {overwrite : true}) // Merge archetype diff with item data
-      data.name = equipmentObj.diff.name || data.item.name
+      let list = duplicate(getProperty(this.item.archetype.data, this.item.archetypeItemPath))
+      let item = list[this.item.archetypeItemIndex];
+      mergeObject(data.data, item.diff, { overwrite: true }) // Merge archetype diff with item data
+      data.name = item.diff.name || data.item.name
     }
+    else
+      data.name = data.item.name
+
+    
 
     data.data = data.data.data; // project system data so that handlebars has the same name and value paths
     data.conditions = CONFIG.statusEffects.map(i => {
@@ -172,6 +177,15 @@ export class AgeOfSigmarItemSheet extends ItemSheet {
       data.data.skills.list.forEach(s => {
         data.skills[s] = true;
       })
+
+
+      let element = $(ArchetypeGroups.constructHTML(data.item, {parentheses : true, commas: true, draggable: false}))
+      // Remove unnecessary outside parentheses
+      let parentheses = Array.from(element.find(".parentheses"))
+      parentheses[0].remove();
+      parentheses[parentheses.length - 1].remove()
+      data.equipmentHTML = `<div class="group-wrapper">${element.html()}</div>`
+
     }
 
     return data;
@@ -185,6 +199,10 @@ export class AgeOfSigmarItemSheet extends ItemSheet {
     super.activateListeners(html)
     html.find(".item-traits").click(ev => {
       new ItemTraits(this.item).render(true)
+    })
+
+    html.find(".configure-groups").click(ev => {
+      new ArchetypeGroups(this.item).render(true)
     })
 
     html.find(".effect-create").click(async ev => {
@@ -281,7 +299,15 @@ export class AgeOfSigmarItemSheet extends ItemSheet {
 
     })
 
-    html.find(".entry-element.talents,.entry-element.equipment").mouseup(ev => {
+    html.find(".add-generic").click(async ev => {
+      new ArchetypeGeneric({item: this.item}).render(true)
+    })
+
+    html.find(".reset").click(ev => {
+      this.item.resetGroups();
+    })
+
+    html.find(".entry-element.talents,.equipment").mouseup(ev => {
       let path = ev.currentTarget.dataset.path
       let index = Number(ev.currentTarget.dataset.index)
       let array = duplicate(getProperty(this.item.data, path));
@@ -290,17 +316,25 @@ export class AgeOfSigmarItemSheet extends ItemSheet {
 
       if (obj) {
         if (ev.button == 0)
-          new AgeOfSigmarItem(game.items.get(obj.id).toObject(), { archetype: { item: this.item, index } }).sheet.render(true)
+        {
+          if (obj.type == "generic")
+          new ArchetypeGeneric({item: this.item, index}).render(true);
+          else
+            new AgeOfSigmarItem(game.items.get(obj.id).toObject(), { archetype: { item: this.item, index, path} }).sheet.render(true)
+        }
         else {
           new Dialog({
             title: "Delete Item?",
-            content: "Do you want to remove this item from the Archetype?",
+            content: "Do you want to remove this item from the Archetype? This will reset the groupings.",
             buttons: {
               yes: {
                 label: "Yes",
-                callback: () => {
+                callback: async () => {
                   array.splice(index, 1)
-                  this.item.update({ [`${path}`]: array })
+                  await this.item.update({ [`${path}`]: array })
+                  if (path.includes("equipment")) {
+                    this.item.resetGroups();
+                  }
                 }
               },
               no: {
